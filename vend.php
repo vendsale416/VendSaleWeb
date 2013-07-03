@@ -42,16 +42,35 @@
 
 <script>
  
+ // TODO:
+ // 	send info about radius to db script
+ //		write info on markers
+ // 	make web page pretty with icons
+ 
 var map;
 var latlng;
+var circ;
 var circleBounds;
 
-var userMarker;						
-	var userMarkerColor = "0000FF";
-    var userMarkerImage = new google.maps.MarkerImage("http://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=%E2%80%A2|" + userMarkerColor,
-		new google.maps.Size(21, 34),
-        new google.maps.Point(0,0),
-        new google.maps.Point(10, 34));	
+//  icon: userMarkerImage,
+var userMarker;						// For the user					
+var frstMarkerColor = "0000FF";		// For the first place store
+var scndMarkerColor = "FF0000";		// For the second place store
+var rstMarkerColor = "FCD116";		// For are the other stores
+var frstMarkerImage = new google.maps.MarkerImage("http://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=%E2%80%A2|" + frstMarkerColor,
+	new google.maps.Size(21, 34),
+    new google.maps.Point(0,0),
+    new google.maps.Point(10, 34));	
+var scndMarkerImage = new google.maps.MarkerImage("http://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=%E2%80%A2|" + scndMarkerColor,
+	new google.maps.Size(21, 34),
+    new google.maps.Point(0,0),
+    new google.maps.Point(10, 34));	
+var rstMarkerImage = new google.maps.MarkerImage("http://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=%E2%80%A2|" + rstMarkerColor,
+	new google.maps.Size(21, 34),
+    new google.maps.Point(0,0),
+    new google.maps.Point(10, 34));	
+    
+var stores = [];			// Will hold all the markers for the stores
         
 function success(position) {
   var s = document.querySelector('#status');
@@ -76,6 +95,7 @@ function success(position) {
   document.querySelector('article').appendChild(mapcanvas);
  
   latlng = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
+  
   var myOptions = {
     zoom: 15,
     center: latlng,
@@ -90,10 +110,19 @@ function success(position) {
       position: latlng, 
       map: map, 
 	  clickable: false,
-	  icon: userMarkerImage,
       title:"You are here! (at least within a "+position.coords.accuracy+" meter radius)"
   });
-
+  
+  circ = {									// Defines the circle with all it's properties
+	     	strokeColor: '#00FF00',
+	  	    strokeOpacity: 0.8,
+	      	strokeWeight: 2,
+	      	fillColor: '#00FF00',
+	      	fillOpacity: 0.35,
+	      	map: map,
+	      	center: latlng,
+	    };
+	circleBounds = new google.maps.Circle(circ);		// Draws the circle to the map
 
  //----lat+long extract to sumit query----START
 document.top.latlong.value = latlng; /*split[1];*/
@@ -128,18 +157,41 @@ if (navigator.geolocation) {
 
 // Function that draws a circle around the user           	
 function drawBounds(frm){
-	var circ = {									// Defines the circle with all it's properties
-	     	strokeColor: '#00FF00',
-	  	    strokeOpacity: 0.8,
-	      	strokeWeight: 2,
-	      	fillColor: '#00FF00',
-	      	fillOpacity: 0.35,
-	      	map: map,
-	      	radius: parseInt(frm.rad.value, 10),
-	      	center: latlng,
-	    };
-	circleBounds = new google.maps.Circle(circ);		// Draws the circle to the map
+	circleBounds.setRadius(parseInt(frm.rad.value, 10));
 }
 
+// Function that adds a store (given location)
+function addStore(loc){
+	var mrk = new google.maps.Marker({		// Creates a new marker object given a location
+      		position: loc, 
+      		map: map, 
+	  		clickable: false,
+	  		visible: false,
+	  		icon: rstMarkerImage,
+  		});
+	stores.push(mrk);						// Puts the marker in an array
+}
+
+// Function that removes all the store marker
+function removeMarkers(){
+    for(var i=0; i < stores.length; i++){
+        stores[i].setMap(null);				// Kills the marker
+    }
+    stores = [];							// Resets the array
+}
+
+// Adds all the markers to the map
+function addMarkers(){
+	if (stores[0] != null){						// So it does not goof
+		stores[0].setIcon(frstMarkerImage);		// Specifies the first place marker icon
+	}
+	if (stores[1] != null){						// So it does not goof
+		stores[1].setIcon(scndMarkerImage);		// Specifies the second place marker icon
+	}
+	var numStore = stores.length;
+	for(var i = 0; i < numStore; i ++){
+		stores[i].setVisible(true);				// Makes all the markers visible
+	}
+}
 
 </script>
