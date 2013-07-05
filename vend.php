@@ -8,27 +8,32 @@
 </head>
 
 <body>
-<body bgcolor="cdc5bf">
-
-<div id="vendsale_title">
-	<img src="res/LogoTransparent.png" alt="VendSale">
-</div>
-
+<body bgcolor="ffffff">
 
 <form name="top" action="./ser/read.php" method="GET">
-  <input type="hidden" name="latlong"/>
-  <input type="hidden" name="lat"/>
-  <input type="hidden" name="lng"/>
-  <div id="search">
-    	<P>Radius: <INPUT TYPE="TEXT" NAME="rad" onkeydown="if (event.keyCode == 13) drawBounds(this.form)">
-			<INPUT TYPE="Button" Value="Go" onClick="drawBounds(this.form)">
-		</P>
-    	<P>Search: <INPUT TYPE="TEXT" NAME="item" onkeydown="if (event.keyCode == 13) changeMe(this.form)">
-			<INPUT TYPE="Button" Value="Go" onClick="changeMe(this.form)">
-		</P>
+	<input type="hidden" name="latlong"/>
+	<input type="hidden" name="lat"/>
+	<input type="hidden" name="lng"/>
+	<div style="text-align: center;">
+		<img style="width: 1000px; height: 90px; position: relative;" alt="VendSale" src="res/MainBanner.png"><br>
 	</div>
-	</form>
-  </div>
+	<input type="button" style=" background-image:url(res/searchIconTrans.png); width: 64px; height: 64px; 
+		position: absolute; top: 30px; left: 210px; opacity:0.6; filter:alpha(opacity=60)" 
+		onclick="shopt()">
+	<input type="button" style="background-image:url(res/vendorsIconTrans.png); width: 64px; height: 64px; 
+		position: absolute; top: 30px; left: 375px;  opacity:0.6; filter:alpha(opacity=60)" 
+		onclick="changeme()">
+	<input type="button" style="background-image:url(res/settingsIconTrans.png); width: 64px; height: 64px; 
+		position: absolute; top: 30px; left: 1080px; opacity:0.6; filter:alpha(opacity=60)"
+		onclick="changeme()">
+	<input type="button" style="background-image:url(res/listIconTrans.png); width: 64px; height: 64px; 
+		position: absolute; top: 30px; left: 930px; opacity:0.6; filter:alpha(opacity=60)"
+		onclick="changeme()">
+		
+	<INPUT type="TEXT" value="Search..." name="ser" id="ser" onkeydown="if (event.keyCode == 13) changeme()"
+		style="position: absolute; top:100px; left:190px; z-index:5; display:none;">
+	<INPUT type="TEXT" value="Radius..." name="rad" id="rad" onkeydown="if (event.keyCode == 13) drawBounds(this.form)"
+		style="position: absolute; top:125px; left:190px; z-index:5; display:none;">
 </form>
 
 
@@ -43,16 +48,18 @@
 <script>
  
  // TODO:
- // 	send info about radius to db script
- //		write info on markers
+ // 	send/receive info from db 
  // 	make web page pretty with icons
  
 var map;
 var latlng;
 var circ;
 var circleBounds;
+var cnt = 0;
 
-//  icon: userMarkerImage,
+var directionsDisplay;
+var directionsService = new google.maps.DirectionsService();
+
 var userMarker;						// For the user					
 var frstMarkerColor = "0000FF";		// For the first place store
 var scndMarkerColor = "FF0000";		// For the second place store
@@ -73,6 +80,8 @@ var rstMarkerImage = new google.maps.MarkerImage("http://chart.apis.google.com/c
 var stores = [];			// Will hold all the markers for the stores
         
 function success(position) {
+
+  directionsDisplay = new google.maps.DirectionsRenderer();
   var s = document.querySelector('#status');
   
   var w = window.innerWidth;
@@ -88,22 +97,29 @@ function success(position) {
   var mapcanvas = document.createElement('div');
   mapcanvas.id = 'mapcanvas';
   mapcanvas.style.height = h-140;
-  mapcanvas.style.width = w-300;
-  mapcanvas.style.right = "30px";
+  mapcanvas.style.width = 1000;
+  mapcanvas.style.left = "183px";
   mapcanvas.style.top = "100px";
-    
+  mapcanvas.style.position = "absolute";
+  
   document.querySelector('article').appendChild(mapcanvas);
  
   latlng = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
+  CNTower = new google.maps.LatLng(43.642604,-79.387117);
+  altlatlng = new google.maps.LatLng(position.coords.latitude+0.001, position.coords.longitude+0.001);
+  altlatlngtwo = new google.maps.LatLng(position.coords.latitude-0.002, position.coords.longitude-0.002);
+  altlatlngthree = new google.maps.LatLng(position.coords.latitude+0.0015, position.coords.longitude-0.0015);
+  altlatlngfour = new google.maps.LatLng(position.coords.latitude-0.0015, position.coords.longitude-0.0015);
   
   var myOptions = {
     zoom: 15,
     center: latlng,
     mapTypeControl: false,
-    navigationControlOptions: {style: google.maps.NavigationControlStyle.SMALL},
+    //navigationControlOptions: {style: google.maps.NavigationControlStyle.SMALL},
     mapTypeId: google.maps.MapTypeId.ROADMAP
   };
   map = new google.maps.Map(document.getElementById("mapcanvas"), myOptions);
+  directionsDisplay.setMap(map);
   
  //user location
   var marker = new google.maps.Marker({
@@ -123,6 +139,12 @@ function success(position) {
 	      	center: latlng,
 	    };
 	circleBounds = new google.maps.Circle(circ);		// Draws the circle to the map
+	
+	addStore(altlatlng);
+	addStore(altlatlngtwo);
+	addStore(altlatlngthree);
+	addStore(altlatlngfour);
+	addMarkers();
 
  //----lat+long extract to sumit query----START
 document.top.latlong.value = latlng; /*split[1];*/
@@ -157,6 +179,7 @@ if (navigator.geolocation) {
 
 // Function that draws a circle around the user           	
 function drawBounds(frm){
+	//circleBounds.setRadius(500);
 	circleBounds.setRadius(parseInt(frm.rad.value, 10));
 }
 
@@ -165,11 +188,21 @@ function addStore(loc){
 	var mrk = new google.maps.Marker({		// Creates a new marker object given a location
       		position: loc, 
       		map: map, 
-	  		clickable: false,
+	  		clickable: true,
 	  		visible: false,
 	  		icon: rstMarkerImage,
   		});
 	stores.push(mrk);						// Puts the marker in an array
+	
+	// TODO: replace info, need to make db call
+	var inf = new google.maps.InfoWindow({
+    		content: '<h1>item:price</h1><h4>name of store</h4>location<br />hours opertion/is open<br />'+
+			'<a href="http://www.xkcd.com" target="_blank">store website</a>'
+	    });
+	google.maps.event.addListener(mrk, 'click', function() {
+	   	inf.open(map, mrk);
+	   	calcRt(loc)
+	});
 }
 
 // Function that removes all the store marker
@@ -192,6 +225,36 @@ function addMarkers(){
 	for(var i = 0; i < numStore; i ++){
 		stores[i].setVisible(true);				// Makes all the markers visible
 	}
+}
+
+// Function that calcultes the route form the users position to another location(loc)
+function calcRt(loc){
+	var request = {
+		origin: latlng,
+		destination: loc,
+		travelMode: google.maps.DirectionsTravelMode.DRIVING
+	};
+	directionsService.route(request, function(response, status) {
+    	if (status == google.maps.DirectionsStatus.OK) {
+      		directionsDisplay.setDirections(response);
+    	}
+  	});
+}
+
+function shopt(){
+	cnt = cnt + 1;
+	if (cnt%2 == 1){
+		document.getElementById("ser").style.display="block";
+		document.getElementById("rad").style.display="block";
+	}else{
+		document.getElementById("ser").style.display="none";
+		document.getElementById("rad").style.display="none";
+	}
+}
+
+function hidopt(){
+	document.getElementById("ser").style.display="none";
+	document.getElementById("rad").style.display="none";
 }
 
 </script>
