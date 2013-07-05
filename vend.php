@@ -4,7 +4,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <meta name="description" content"VendSale allows the user to access the prices of produce and determine the availabiltiy of these goods in their area. After the user inputs the search radius and the name of the produce, they are given a list of the cheapest and closest stores as defines by their search terms." />
 <link rel="icon" type="image/ico" href="/favicon.ico"/>
-<link rel="stylesheet" type="text/css" href="css/template.css" />
 </head>
 
 <body>
@@ -22,13 +21,13 @@
 		onclick="shopt()">
 	<input type="button" style="background-image:url(res/vendorsIconTrans.png); width: 64px; height: 64px; 
 		position: absolute; top: 30px; left: 375px;  opacity:0.6; filter:alpha(opacity=60)" 
-		onclick="changeme()">
+		onclick="chng()">
 	<input type="button" style="background-image:url(res/settingsIconTrans.png); width: 64px; height: 64px; 
 		position: absolute; top: 30px; left: 1080px; opacity:0.6; filter:alpha(opacity=60)"
-		onclick="changeme()">
+		onclick="chng()">
 	<input type="button" style="background-image:url(res/listIconTrans.png); width: 64px; height: 64px; 
 		position: absolute; top: 30px; left: 930px; opacity:0.6; filter:alpha(opacity=60)"
-		onclick="changeme()">
+		onclick="chng()">
 		
 	<INPUT type="TEXT" value="Search..." name="ser" id="ser" onkeydown="if (event.keyCode == 13) changeme()"
 		style="position: absolute; top:100px; left:190px; z-index:5; display:none;">
@@ -241,20 +240,20 @@ function calcRt(loc){
   	});
 }
 
+// Shows the options for searching/setting radius
 function shopt(){
 	cnt = cnt + 1;
-	if (cnt%2 == 1){
+	if (cnt%2 == 1){			// Displays the text boxes 
 		document.getElementById("ser").style.display="block";
 		document.getElementById("rad").style.display="block";
-	}else{
+	}else{						// Hides the text boxes
 		document.getElementById("ser").style.display="none";
 		document.getElementById("rad").style.display="none";
 	}
 }
 
-function hidopt(){
-	document.getElementById("ser").style.display="none";
-	document.getElementById("rad").style.display="none";
+function chng(){
+	window.location = "http://www.vendsale.com/notyetthere.html"
 }
 
 </script>
